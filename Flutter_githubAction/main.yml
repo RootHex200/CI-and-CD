@@ -1,0 +1,46 @@
+name: Flutter CI/CD
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v1
+      with:
+        flutter-version: '3.3.4'
+        cache: true
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Analyze code
+      run: flutter analyze
+
+    - name: Run tests
+      run: flutter test
+
+    - name: Build APK
+      run: flutter build apk
+      env:
+        BUILD_NUMBER: ${{ github.run_number }}
+    - name: show files
+      run: ls -la
+    - name: apk directory
+      run: ls -la ./build/app/outputs/flutter-apk/
+    - name: check dir
+      run: pwd
+    steps:
+      - name: Upload to gdrive
+        uses: adityak74/google-drive-upload-git-action@main
+        with:
+          credentials: ${{ secrets.GDRIVE_SECRET }}
+          filename: "./build/app/outputs/flutter-apk/app-release.apk"
+          folderId: ${{ secrets.GDRIVE_CICD_FOLDER_ID }}
+          name: "app-release.apk" # Name of file in drive. Needs to be same as temporary file.
+          overwrite: "true" # This will overwrite temporary file
+          mimetype: application/vnd.android.package-archive
